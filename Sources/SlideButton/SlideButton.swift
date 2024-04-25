@@ -258,7 +258,7 @@ public extension SlideButton where Label == Text {
             var body: some View {
                 ScrollView {
                     VStack(spacing: 25) {
-                        SlideButton("Centered text and lorem ipsum dolor sit", styling: .init(indicatorColor: .white, indicatorForeground: .black, backgroundColor: .black, textColor: .white, indicatorSystemName: "arrow.forward"), action: sliderCallback)
+                        SlideButton("Centered text and lorem ipsum dolor sit", styling: .init(indicatorColor: .white, indicatorForeground: .black, indicatorResetOnComplete: false, backgroundColor: .black, textColor: .white, indicatorSystemName: "arrow.forward"), action: sliderCallback)
 
                         SlideButton(styling: .init(indicatorColor: .white, indicatorForeground: .green, backgroundColor: .green, textColor: .white, indicatorSystemName: "face.smiling"), action: sliderCallback, label: { Text("Custom Progress") }, progress: {
                             Image(systemName: "hourglass")

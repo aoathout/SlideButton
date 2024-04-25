@@ -17,6 +17,7 @@ public struct SlideButtonStyling {
     ///   - indicatorShape: The shape type of the indicator. Default is `.circular`.
     ///   - indicatorRotatesForRTL: Whether to rotate the indicator for right-to-left layout or not. Default is `true`.
     ///   - indicatorBrightness: The brightness of the indicator if enabled. Default is `0.0`.
+    ///   - indicatorResetOnComplete: Whether the indicator should move back to start when callback is complete. Default is `true`
     ///   - backgroundColor: The color of the background. Default is `nil`, which sets the background color to a 30% opacity version of the indicator color.
     ///   - textColor: The color of the title text. Default is `.secondary`.
     ///   - indicatorSystemName: The system name of the icon used for the indicator. Default is `"chevron.right"`.
