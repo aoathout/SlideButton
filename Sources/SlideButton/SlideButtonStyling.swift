@@ -33,6 +33,7 @@ public struct SlideButtonStyling {
         indicatorShape: ShapeType = .circular,
         indicatorRotatesForRTL: Bool = true,
         indicatorBrightness: Double = 0.0,
+        indicatorResetOnComplete: Bool = true,
         backgroundColor: Color? = nil,
         textColor: Color = .secondary,
         indicatorSystemName: String = "chevron.right",
@@ -47,6 +48,7 @@ public struct SlideButtonStyling {
         self.indicatorShape = indicatorShape
         self.indicatorBrightness = indicatorBrightness
         self.indicatorRotatesForRTL = indicatorRotatesForRTL
+        self.indicatorResetOnComplete = indicatorResetOnComplete
 
         self.indicatorColor = indicatorColor
         self.indicatorForeground = indicatorForeground
@@ -66,6 +68,7 @@ public struct SlideButtonStyling {
     var indicatorShape: ShapeType
     var indicatorRotatesForRTL: Bool
     var indicatorBrightness: Double
+    var indicatorResetOnComplete: Bool
 
     var indicatorColor: Color
     var indicatorForeground: Color

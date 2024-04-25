@@ -166,7 +166,9 @@ public struct SlideButton<Label: View, Progress: View>: View {
                                         #endif
 
                                         await callback()
-                                        swipeState = .start
+                                        if self.styling.indicatorResetOnComplete {
+                                            swipeState = .start
+                                        }
                                     }
 
                                 } else {
@@ -187,7 +189,9 @@ public struct SlideButton<Label: View, Progress: View>: View {
 
                 Task {
                     await callback()
-//                    swipeState = .start
+                    if self.styling.indicatorResetOnComplete {
+                        swipeState = .start
+                    }
                 }
             }, label: {
                 title
