@@ -2,6 +2,8 @@
 //  SlideButtonStyling.swift
 //  SlideButton by NO-COMMENT
 //
+// Forked and modified by aoathout
+//
 
 import SwiftUI
 
@@ -27,6 +29,7 @@ public struct SlideButtonStyling {
         indicatorSize: CGFloat = 60,
         indicatorSpacing: CGFloat = 5,
         indicatorColor: Color = .accentColor,
+        indicatorForeground: Color = .white,
         indicatorShape: ShapeType = .circular,
         indicatorRotatesForRTL: Bool = true,
         indicatorBrightness: Double = 0.0,
@@ -46,6 +49,7 @@ public struct SlideButtonStyling {
         self.indicatorRotatesForRTL = indicatorRotatesForRTL
 
         self.indicatorColor = indicatorColor
+        self.indicatorForeground = indicatorForeground
         self.backgroundColor = backgroundColor ?? indicatorColor.opacity(0.3)
         self.textColor = textColor
 
@@ -64,6 +68,7 @@ public struct SlideButtonStyling {
     var indicatorBrightness: Double
 
     var indicatorColor: Color
+    var indicatorForeground: Color
     var backgroundColor: Color
     var textColor: Color
 

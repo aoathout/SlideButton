@@ -2,14 +2,17 @@
 //  SlideButton.swift
 //  SlideButton by NO-COMMENT
 //
+// Forked and modified by aoathout
+//
 
 import SwiftUI
 
 /// A view that presents a slide button that can be swiped to unlock or perform an action.
-public struct SlideButton<Label: View>: View {
+public struct SlideButton<Label: View, Progress: View>: View {
     @Environment(\.isEnabled) private var isEnabled
 
     private let title: Label
+    private let progress: (() -> Progress)?
     private let callback: () async -> Void
 
     public typealias Styling = SlideButtonStyling
@@ -34,10 +37,11 @@ public struct SlideButton<Label: View>: View {
     ///   - styling: The styling options to customize the appearance of the slide button. Default is `.default`.
     ///   - action: The async callback action that is executed when the user successfully swipes the indicator.
     ///   - label: The function creating a label view
-    public init(styling: Styling = .default, action: @escaping () async -> Void, @ViewBuilder label: () -> Label) {
+    public init(styling: Styling = .default, action: @escaping () async -> Void, @ViewBuilder label: () -> Label, progress: (() -> Progress)? = nil) {
         self.title = label()
         self.callback = action
         self.styling = styling
+        self.progress = progress
 
         self._offset = .init(initialValue: styling.indicatorSpacing)
     }
@@ -111,11 +115,17 @@ public struct SlideButton<Label: View>: View {
                     .foregroundColor(isEnabled ? styling.indicatorColor : .gray)
                     .overlay(content: {
                         ZStack {
-                            ProgressView().progressViewStyle(.circular)
-                                .tint(.white)
-                                .opacity(swipeState == .end ? 1 : 0)
+                            Group {
+                                if let progress = self.progress {
+                                    progress()
+                                } else {
+                                    ProgressView().progressViewStyle(.circular)
+                                        .tint(styling.indicatorForeground)
+                                }
+                            }
+                            .opacity(swipeState == .end ? 1 : 0)
                             Image(systemName: isEnabled ? styling.indicatorSystemName : styling.indicatorDisabledSystemName)
-                                .foregroundColor(.white)
+                                .foregroundColor(styling.indicatorForeground)
                                 .font(.system(size: max(0.4 * styling.indicatorSize, 0.5 * styling.indicatorSize - 2 * styling.indicatorSpacing), weight: .semibold))
                                 .opacity(swipeState == .end ? 0 : 1)
                                 .rotationEffect(Angle(degrees: styling.indicatorRotatesForRTL && self.layoutDirection == .rightToLeft ? 180 : 0))
@@ -177,7 +187,7 @@ public struct SlideButton<Label: View>: View {
 
                 Task {
                     await callback()
-                    swipeState = .start
+//                    swipeState = .start
                 }
             }, label: {
                 title
@@ -200,6 +210,22 @@ public struct SlideButton<Label: View>: View {
     }
 }
 
+public extension SlideButton where Progress == EmptyView {
+    init(styling: Styling = .default, action: @escaping () async -> Void, @ViewBuilder label: () -> Label) {
+        self.init(styling: styling, action: action, label: label, progress: nil)
+    }
+}
+
+public extension SlideButton where Label == Text, Progress == EmptyView {
+    init(_ titleKey: LocalizedStringKey, styling: Styling = .default, action: @escaping () async -> Void) {
+        self.init(styling: styling, action: action, label: { Text(titleKey) }, progress: nil)
+    }
+    
+    init<S>(_ title: S, styling: Styling = .default, action: @escaping () async -> Void) where S: StringProtocol {
+        self.init(styling: styling, action: action, label: { Text(title) }, progress: nil)
+    }
+}
+
 public extension SlideButton where Label == Text {
     @available(*, deprecated, renamed: "init(_:styling:action:)")
     init(_ titleKey: LocalizedStringKey, styling: Styling = .default, callback: @escaping () async -> Void) {
@@ -209,7 +235,7 @@ public extension SlideButton where Label == Text {
     init(_ titleKey: LocalizedStringKey, styling: Styling = .default, action: @escaping () async -> Void) {
         self.init(styling: styling, action: action, label: { Text(titleKey) })
     }
-
+    
     @available(*, deprecated, renamed: "init(_:styling:action:)")
     init<S>(_ title: S, styling: Styling = .default, callback: @escaping () async -> Void) where S: StringProtocol {
         self.init(styling: styling, action: callback, label: { Text(title) })
@@ -228,16 +254,27 @@ public extension SlideButton where Label == Text {
             var body: some View {
                 ScrollView {
                     VStack(spacing: 25) {
-                        SlideButton("Centered text and lorem ipsum dolor sit", action: sliderCallback)
+                        SlideButton("Centered text and lorem ipsum dolor sit", styling: .init(indicatorColor: .white, indicatorForeground: .black, backgroundColor: .black, textColor: .white, indicatorSystemName: "arrow.forward"), action: sliderCallback)
+
+                        SlideButton(styling: .init(indicatorColor: .white, indicatorForeground: .green, backgroundColor: .green, textColor: .white, indicatorSystemName: "face.smiling"), action: sliderCallback, label: { Text("Custom Progress") }, progress: {
+                            Image(systemName: "hourglass")
+                                .foregroundColor(.green)
+                        })
+                        
                         SlideButton("Leading text and no fade", styling: .init(textAlignment: .leading, textFadesOpacity: false), action: sliderCallback)
+                        
                         SlideButton("Center text and no mask", styling: .init(textHiddenBehindIndicator: false), action: sliderCallback)
+                        
                         SlideButton("Remaining space center", styling: .init(indicatorColor: .red, indicatorSystemName: "trash"), action: sliderCallback)
+                        
                         SlideButton("Trailing and immediate response", styling: .init(textAlignment: .trailing), action: sliderCallback)
+                        
                         SlideButton("Global center", styling: .init(indicatorColor: .red, indicatorSystemName: "trash", textAlignment: .globalCenter, textShimmers: true), action: sliderCallback)
+                        
                         SlideButton("Spacing 15", styling: .init(indicatorSpacing: 15), action: sliderCallback)
+                        
                         SlideButton("Big", styling: .init(indicatorSize: 100), action: sliderCallback)
-                        SlideButton("disabled green", styling: .init(indicatorColor: .green), action: sliderCallback)
-                            .disabled(true)
+                        
                         SlideButton("disabled", action: sliderCallback)
                             .disabled(true)
                     }.padding(.horizontal)

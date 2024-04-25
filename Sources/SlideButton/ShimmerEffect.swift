@@ -2,6 +2,8 @@
 //  ShimmerEffect.swift
 //  SlideButton by NO-COMMENT
 //
+// Forked and modified by aoathout
+//
 
 import SwiftUI
 
