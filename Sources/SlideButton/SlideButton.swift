@@ -20,7 +20,7 @@ public struct SlideButton<Label: View, Progress: View>: View {
 
     @GestureState private var offset: CGFloat
     @State private var swipeState: SwipeState = .start
-    @State private var resetSwipeState: Bool = true
+    @Binding private var resetSwipeState: Bool
 
     @Environment(\.layoutDirection) private var layoutDirection
 
@@ -38,12 +38,12 @@ public struct SlideButton<Label: View, Progress: View>: View {
     ///   - styling: The styling options to customize the appearance of the slide button. Default is `.default`.
     ///   - action: The async callback action that is executed when the user successfully swipes the indicator.
     ///   - label: The function creating a label view
-    public init(resetSwipeState: Bool = true, styling: Styling = .default, action: @escaping () async -> Void, @ViewBuilder label: () -> Label, progress: (() -> Progress)? = nil) {
+    public init(resetSwipeState: Binding<Bool> = .constant(true), styling: Styling = .default, action: @escaping () async -> Void, @ViewBuilder label: () -> Label, progress: (() -> Progress)? = nil) {
         self.title = label()
         self.callback = action
         self.styling = styling
         self.progress = progress
-        self.resetSwipeState = resetSwipeState
+        self._resetSwipeState = resetSwipeState
 
         self._offset = .init(initialValue: styling.indicatorSpacing)
     }
@@ -222,83 +222,87 @@ public struct SlideButton<Label: View, Progress: View>: View {
 }
 
 public extension SlideButton where Progress == EmptyView {
-    init(resetSwipeState: Bool = true, styling: Styling = .default, action: @escaping () async -> Void, @ViewBuilder label: () -> Label) {
+    init(resetSwipeState: Binding<Bool> = .constant(true), styling: Styling = .default, action: @escaping () async -> Void, @ViewBuilder label: () -> Label) {
         self.init(resetSwipeState: resetSwipeState, styling: styling, action: action, label: label, progress: nil)
     }
 }
 
 public extension SlideButton where Label == Text, Progress == EmptyView {
-    init(_ titleKey: LocalizedStringKey, resetSwipeState: Bool = true,  styling: Styling = .default, action: @escaping () async -> Void) {
+    init(_ titleKey: LocalizedStringKey, resetSwipeState: Binding<Bool> = .constant(true),  styling: Styling = .default, action: @escaping () async -> Void) {
         self.init(resetSwipeState: resetSwipeState, styling: styling, action: action, label: { Text(titleKey) }, progress: nil)
     }
     
-    init<S>(_ title: S, resetSwipeState: Bool = true, styling: Styling = .default, action: @escaping () async -> Void) where S: StringProtocol {
+    init<S>(_ title: S, resetSwipeState: Binding<Bool> = .constant(true), styling: Styling = .default, action: @escaping () async -> Void) where S: StringProtocol {
         self.init(resetSwipeState: resetSwipeState, styling: styling, action: action, label: { Text(title) }, progress: nil)
     }
 }
 
 public extension SlideButton where Label == Text {
     @available(*, deprecated, renamed: "init(_:styling:action:)")
-    init(_ titleKey: LocalizedStringKey, resetSwipeState: Bool = true, styling: Styling = .default, callback: @escaping () async -> Void) {
+    init(_ titleKey: LocalizedStringKey, resetSwipeState: Binding<Bool> = .constant(true), styling: Styling = .default, callback: @escaping () async -> Void) {
         self.init(resetSwipeState: resetSwipeState, styling: styling, action: callback, label: { Text(titleKey) })
     }
 
-    init(_ titleKey: LocalizedStringKey, resetSwipeState: Bool = true, styling: Styling = .default, action: @escaping () async -> Void) {
+    init(_ titleKey: LocalizedStringKey, resetSwipeState: Binding<Bool> = .constant(true), styling: Styling = .default, action: @escaping () async -> Void) {
         self.init(resetSwipeState: resetSwipeState, styling: styling, action: action, label: { Text(titleKey) })
     }
     
     @available(*, deprecated, renamed: "init(_:styling:action:)")
-    init<S>(_ title: S, resetSwipeState: Bool = true, styling: Styling = .default, callback: @escaping () async -> Void) where S: StringProtocol {
+    init<S>(_ title: S, resetSwipeState: Binding<Bool> = .constant(true), styling: Styling = .default, callback: @escaping () async -> Void) where S: StringProtocol {
         self.init(resetSwipeState: resetSwipeState, styling: styling, action: callback, label: { Text(title) })
     }
 
-    init<S>(_ title: S, resetSwipeState: Bool = true, styling: Styling = .default, action: @escaping () async -> Void) where S: StringProtocol {
+    init<S>(_ title: S, resetSwipeState: Binding<Bool> = .constant(true), styling: Styling = .default, action: @escaping () async -> Void) where S: StringProtocol {
         self.init(resetSwipeState: resetSwipeState, styling: styling, action: action, label: { Text(title) })
     }
 }
 
 #if DEBUG
-    @available(iOS 16.0, *)
-    @available(macOS 16.0, *)
-    struct SlideButton_Previews: PreviewProvider {
-        struct ContentView: View {
-            var body: some View {
-                ScrollView {
-                    VStack(spacing: 25) {
-                        SlideButton("Centered text and lorem ipsum dolor sit", styling: .init(indicatorColor: .white, indicatorForeground: .black, backgroundColor: .black, textColor: .white, indicatorSystemName: "arrow.forward"), action: sliderCallback)
+@available(iOS 16.0, *)
+@available(macOS 16.0, *)
+private struct SlideButtonPreviewWrapper: View {
+    @State var resetSwipeState: Bool = false
+    
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 25) {
+                SlideButton("Centered text and lorem ipsum dolor sit", resetSwipeState: $resetSwipeState, styling: .init(indicatorColor: .white, indicatorForeground: .black, backgroundColor: .black, textColor: .white, indicatorSystemName: "arrow.forward"), action: sliderCallback)
 
-                        SlideButton(styling: .init(indicatorColor: .white, indicatorForeground: .green, backgroundColor: .green, textColor: .white, indicatorSystemName: "face.smiling"), action: sliderCallback, label: { Text("Custom Progress") }, progress: {
-                            Image(systemName: "hourglass")
-                                .foregroundColor(.green)
-                        })
-                        
-                        SlideButton("Leading text and no fade", styling: .init(textAlignment: .leading, textFadesOpacity: false), action: sliderCallback)
-                        
-                        SlideButton("Center text and no mask", styling: .init(textHiddenBehindIndicator: false), action: sliderCallback)
-                        
-                        SlideButton("Remaining space center", styling: .init(indicatorColor: .red, indicatorSystemName: "trash"), action: sliderCallback)
-                        
-                        SlideButton("Trailing and immediate response", styling: .init(textAlignment: .trailing), action: sliderCallback)
-                        
-                        SlideButton("Global center", styling: .init(indicatorColor: .red, indicatorSystemName: "trash", textAlignment: .globalCenter, textShimmers: true), action: sliderCallback)
-                        
-                        SlideButton("Spacing 15", styling: .init(indicatorSpacing: 15), action: sliderCallback)
-                        
-                        SlideButton("Big", styling: .init(indicatorSize: 100), action: sliderCallback)
-                        
-                        SlideButton("disabled", action: sliderCallback)
-                            .disabled(true)
-                    }.padding(.horizontal)
-                }
-            }
-
-            private func sliderCallback() async {
-                try? await Task.sleep(for: .seconds(2))
-            }
-        }
-
-        static var previews: some View {
-            ContentView()
+                SlideButton(styling: .init(indicatorColor: .white, indicatorForeground: .green, backgroundColor: .green, textColor: .white, indicatorSystemName: "face.smiling"), action: sliderCallback, label: { Text("Custom Progress") }, progress: {
+                    Image(systemName: "hourglass")
+                        .foregroundColor(.green)
+                })
+                
+                SlideButton("Leading text and no fade", styling: .init(textAlignment: .leading, textFadesOpacity: false), action: sliderCallback)
+                
+                SlideButton("Center text and no mask", styling: .init(textHiddenBehindIndicator: false), action: sliderCallback)
+                
+                SlideButton("Remaining space center", styling: .init(indicatorColor: .red, indicatorSystemName: "trash"), action: sliderCallback)
+                
+                SlideButton("Trailing and immediate response", styling: .init(textAlignment: .trailing), action: sliderCallback)
+                
+                SlideButton("Global center", styling: .init(indicatorColor: .red, indicatorSystemName: "trash", textAlignment: .globalCenter, textShimmers: true), action: sliderCallback)
+                
+                SlideButton("Spacing 15", styling: .init(indicatorSpacing: 15), action: sliderCallback)
+                
+                SlideButton("Big", styling: .init(indicatorSize: 100), action: sliderCallback)
+                
+                SlideButton("disabled", action: sliderCallback)
+                    .disabled(true)
+            }.padding(.horizontal)
         }
     }
+    
+    private func sliderCallback() async {
+        try? await Task.sleep(for: .seconds(2))
+    }
+}
+
+@available(iOS 16.0, *)
+@available(macOS 16.0, *)
+struct SlideButton_Previews: PreviewProvider {
+    static var previews: some View {
+        SlideButtonPreviewWrapper()
+    }
+}
 #endif
