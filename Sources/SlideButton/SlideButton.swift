@@ -20,6 +20,7 @@ public struct SlideButton<Label: View, Progress: View>: View {
 
     @GestureState private var offset: CGFloat
     @State private var swipeState: SwipeState = .start
+    @State private var resetSwipeState: Bool = true
 
     @Environment(\.layoutDirection) private var layoutDirection
 
@@ -37,11 +38,12 @@ public struct SlideButton<Label: View, Progress: View>: View {
     ///   - styling: The styling options to customize the appearance of the slide button. Default is `.default`.
     ///   - action: The async callback action that is executed when the user successfully swipes the indicator.
     ///   - label: The function creating a label view
-    public init(styling: Styling = .default, action: @escaping () async -> Void, @ViewBuilder label: () -> Label, progress: (() -> Progress)? = nil) {
+    public init(resetSwipeState: Bool = true, styling: Styling = .default, action: @escaping () async -> Void, @ViewBuilder label: () -> Label, progress: (() -> Progress)? = nil) {
         self.title = label()
         self.callback = action
         self.styling = styling
         self.progress = progress
+        self.resetSwipeState = resetSwipeState
 
         self._offset = .init(initialValue: styling.indicatorSpacing)
     }
@@ -166,7 +168,7 @@ public struct SlideButton<Label: View, Progress: View>: View {
                                         #endif
 
                                         await callback()
-                                        if self.styling.indicatorResetOnComplete {
+                                        if self.resetSwipeState {
                                             swipeState = .start
                                         }
                                     }
@@ -181,6 +183,11 @@ public struct SlideButton<Label: View, Progress: View>: View {
                     )
             }
             .mask({ mask })
+            .onChange(of: resetSwipeState) { reset in
+                if reset {
+                    swipeState = .start
+                }
+            }
         }
         .frame(height: styling.indicatorSize)
         .accessibilityRepresentation {
@@ -189,7 +196,7 @@ public struct SlideButton<Label: View, Progress: View>: View {
 
                 Task {
                     await callback()
-                    if self.styling.indicatorResetOnComplete {
+                    if self.resetSwipeState {
                         swipeState = .start
                     }
                 }
@@ -215,38 +222,38 @@ public struct SlideButton<Label: View, Progress: View>: View {
 }
 
 public extension SlideButton where Progress == EmptyView {
-    init(styling: Styling = .default, action: @escaping () async -> Void, @ViewBuilder label: () -> Label) {
-        self.init(styling: styling, action: action, label: label, progress: nil)
+    init(resetSwipeState: Bool = true, styling: Styling = .default, action: @escaping () async -> Void, @ViewBuilder label: () -> Label) {
+        self.init(resetSwipeState: resetSwipeState, styling: styling, action: action, label: label, progress: nil)
     }
 }
 
 public extension SlideButton where Label == Text, Progress == EmptyView {
-    init(_ titleKey: LocalizedStringKey, styling: Styling = .default, action: @escaping () async -> Void) {
-        self.init(styling: styling, action: action, label: { Text(titleKey) }, progress: nil)
+    init(_ titleKey: LocalizedStringKey, resetSwipeState: Bool = true,  styling: Styling = .default, action: @escaping () async -> Void) {
+        self.init(resetSwipeState: resetSwipeState, styling: styling, action: action, label: { Text(titleKey) }, progress: nil)
     }
     
-    init<S>(_ title: S, styling: Styling = .default, action: @escaping () async -> Void) where S: StringProtocol {
-        self.init(styling: styling, action: action, label: { Text(title) }, progress: nil)
+    init<S>(_ title: S, resetSwipeState: Bool = true, styling: Styling = .default, action: @escaping () async -> Void) where S: StringProtocol {
+        self.init(resetSwipeState: resetSwipeState, styling: styling, action: action, label: { Text(title) }, progress: nil)
     }
 }
 
 public extension SlideButton where Label == Text {
     @available(*, deprecated, renamed: "init(_:styling:action:)")
-    init(_ titleKey: LocalizedStringKey, styling: Styling = .default, callback: @escaping () async -> Void) {
-        self.init(styling: styling, action: callback, label: { Text(titleKey) })
+    init(_ titleKey: LocalizedStringKey, resetSwipeState: Bool = true, styling: Styling = .default, callback: @escaping () async -> Void) {
+        self.init(resetSwipeState: resetSwipeState, styling: styling, action: callback, label: { Text(titleKey) })
     }
 
-    init(_ titleKey: LocalizedStringKey, styling: Styling = .default, action: @escaping () async -> Void) {
-        self.init(styling: styling, action: action, label: { Text(titleKey) })
+    init(_ titleKey: LocalizedStringKey, resetSwipeState: Bool = true, styling: Styling = .default, action: @escaping () async -> Void) {
+        self.init(resetSwipeState: resetSwipeState, styling: styling, action: action, label: { Text(titleKey) })
     }
     
     @available(*, deprecated, renamed: "init(_:styling:action:)")
-    init<S>(_ title: S, styling: Styling = .default, callback: @escaping () async -> Void) where S: StringProtocol {
-        self.init(styling: styling, action: callback, label: { Text(title) })
+    init<S>(_ title: S, resetSwipeState: Bool = true, styling: Styling = .default, callback: @escaping () async -> Void) where S: StringProtocol {
+        self.init(resetSwipeState: resetSwipeState, styling: styling, action: callback, label: { Text(title) })
     }
 
-    init<S>(_ title: S, styling: Styling = .default, action: @escaping () async -> Void) where S: StringProtocol {
-        self.init(styling: styling, action: action, label: { Text(title) })
+    init<S>(_ title: S, resetSwipeState: Bool = true, styling: Styling = .default, action: @escaping () async -> Void) where S: StringProtocol {
+        self.init(resetSwipeState: resetSwipeState, styling: styling, action: action, label: { Text(title) })
     }
 }
 
@@ -258,7 +265,7 @@ public extension SlideButton where Label == Text {
             var body: some View {
                 ScrollView {
                     VStack(spacing: 25) {
-                        SlideButton("Centered text and lorem ipsum dolor sit", styling: .init(indicatorColor: .white, indicatorForeground: .black, indicatorResetOnComplete: false, backgroundColor: .black, textColor: .white, indicatorSystemName: "arrow.forward"), action: sliderCallback)
+                        SlideButton("Centered text and lorem ipsum dolor sit", styling: .init(indicatorColor: .white, indicatorForeground: .black, backgroundColor: .black, textColor: .white, indicatorSystemName: "arrow.forward"), action: sliderCallback)
 
                         SlideButton(styling: .init(indicatorColor: .white, indicatorForeground: .green, backgroundColor: .green, textColor: .white, indicatorSystemName: "face.smiling"), action: sliderCallback, label: { Text("Custom Progress") }, progress: {
                             Image(systemName: "hourglass")
